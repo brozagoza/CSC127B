@@ -1,0 +1,249 @@
+import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+class Deck
+{
+    int size;  // the size of the deck
+    Node head; // to hold the head of the list
+    Node tail; // hold the tail of the list
+    
+    
+    /*===================================================================================================================================
+     |  Constructor Deck(string)
+     |
+     |        Purpose: Creates a deck object and populates it with the cards found from the given file passed in as a String in the
+     |                 order the cards appear in.
+     |
+     |     Parameters: String filename - the name of the file the figure will be read from
+     |
+     |    Pre-Condition: file is passed in and will be stored as a Deck object
+     |   Post-Condition: Deck object now contains all the legal cards from the file
+     |
+     |        Returns:  (void)
+     *=================================================================================================================================*/
+    Deck (String filename)
+    {
+        BufferedReader theFile = null; // to hold the file read in
+        String line = "";              // to temporarily hold the given line of the file
+        String rankStr = "";           // to hold the rank as a string temporarily
+        int rankInt = 0;               // holds the rank as an int
+        Card tempCard = null;          // holds the card at the given location in the file
+        
+        head = new Node(null);
+        tail = new Node(null);
+        size = 0;
+        
+        try
+        {
+            theFile = new BufferedReader(new FileReader(filename)); // reads in the file
+            
+            while ((line = theFile.readLine()) != null) // until the end of the file
+            {
+                line = line.trim(); // removes trailing and leading whitespace
+                
+                rankStr = line.substring(0, line.indexOf(' '));
+                rankInt = Integer.parseInt(rankStr); // puts the rank as an int
+                
+                line = line.substring(rankStr.length(), line.length());
+                line = line.trim();
+                line = line.toUpperCase(); // line holds the suit as all caps with no spaces
+                
+                
+                if ( rankInt > 0 && rankInt < 14)
+                    if (line.equals("CLUBS") || line.equals("HEARTS") || line.equals("DIAMONDS") || line.equals("SPADES"))
+                {
+                    tempCard = new Card(rankInt, line); // creats a new object that is to be added to teh list
+                    
+                    Node tempNode = new Node(tempCard); // creates a new node of that new object
+                    
+                    insertAfter(tail, tempNode); // inserts it after the tail of the list
+                    
+                } // end if
+            } // end while
+            
+        } // end try
+        catch (FileNotFoundException e)
+        {
+            System.out.print("File "+filename+" was not found, please try again.");
+        } // end catch
+        catch (IOException e)
+        {
+        }
+        
+        
+        System.out.println(this.toString());
+        
+        
+    } // end constructor
+    
+    /*===================================================================================================================================
+     |  Constructor Deck(stringbuilder)
+     |
+     |        Purpose: Creates a deck object and populates it with the cards found from the given file passed in as a StringBuilder
+     |                 using the ordering scheme Clubs, Diamonds, Hearts, and Spades.
+     |
+     |     Parameters: StringBuilder filename - the name of the file the figure will be read from
+     |
+     |    Pre-Condition: file is passed in and will be stored as a Deck object
+     |   Post-Condition: Deck object now contains all the legal cards from the file
+     |
+     |        Returns:  (void)
+     *=================================================================================================================================*/
+    Deck(StringBuilder filename)
+    {
+        BufferedReader theFile = null; // to hold the file read in
+        String line = "";              // to temporarily hold the given line of the file
+        String rankStr = "";           // to hold the rank as a string temporarily
+        int rankInt = 0;               // holds the rank as an int
+        Card tempCard = null;          // holds the card at the given location in the file
+        
+        head = new Node(null);
+        tail = new Node(null);
+        size = 0;
+        
+        try
+        {
+            theFile = new BufferedReader(new FileReader(filename.toString())); // reads in the file
+            
+            while ((line = theFile.readLine()) != null) // until the end of the file
+            {
+                line = line.trim(); // removes trailing and leading whitespace
+                
+                rankStr = line.substring(0, line.indexOf(' '));
+                rankInt = Integer.parseInt(rankStr); // puts the rank as an int
+                
+                line = line.substring(rankStr.length(), line.length());
+                line = line.trim();
+                line = line.toUpperCase(); // line holds the suit as all caps with no spaces
+                
+                
+                if ( rankInt > 0 && rankInt < 14)
+                    if (line.equals("CLUBS") || line.equals("HEARTS") || line.equals("DIAMONDS") || line.equals("SPADES"))
+                {
+                    tempCard = new Card(rankInt, line); // creats a new object that is to be added to teh list
+                    Node tempNode = new Node(tempCard); // creates a new node of that new object
+                    
+                    Node nodeBefore = new Node(null);
+                    Node nodeAfter = new Node(null);
+                    nodeAfter = head;
+                    
+                    if (nodeAfter.getData() == null)
+                        insertAfter(tail, tempNode);
+                    else
+                    {
+                        while(nodeAfter.getData() != null)
+                        {
+                            System.out.println(nodeAfter.getData().getSuit()+" "+nodeAfter.getData().getRank());
+                            System.out.println(size);
+                            if (tempCard.getSuit().charAt(0) < nodeAfter.getData().getSuit().charAt(0))
+                            {
+                                insertAfter(nodeBefore, tempNode);
+                                break; // exit this young loop
+                            }
+                            else if (tempCard.getSuit().charAt(0) == nodeAfter.getData().getSuit().charAt(0))
+                            {
+                                if (tempCard.getRank() < nodeAfter.getData().getRank())
+                                    insertAfter(nodeBefore, tempNode);
+                                else if (tempCard.getRank() == nodeAfter.getData().getRank())
+                                    insertAfter(nodeAfter, tempNode);
+                                break; // exit this young loop
+                            }
+                            else
+                            {
+                            
+                            
+                            nodeBefore.setData( nodeAfter);
+                            nodeAfter.setData(nodeAfter.getNext());
+                            }
+                        } // end while
+                        
+                        if (nodeAfter.getNext() == null)
+                            insertAfter(tail, tempNode);
+                        
+                        
+                        
+                    } // end if
+                } // end while
+            }
+            
+        } // end try
+        catch (FileNotFoundException e)
+        {
+            System.out.print("File "+filename+" was not found, please try again.");
+        } // end catch
+        catch (IOException e)
+        {
+        }
+        
+        
+        System.out.println(this.toString());
+        
+    } // end constructor 2
+    
+    
+    private void insertAfter(Node currNode, Node newNode)
+    {
+        Node temp = null;
+        
+        if (size == 0)
+        {
+            head = newNode;
+            tail = head;
+            size++;
+        } // end if
+        else if (currNode == tail)
+        {
+            tail.setNext(newNode);
+            tail = newNode;
+            size++;
+        }
+        else
+        {
+            temp = currNode.getNext();
+            newNode.setNext(temp);
+            currNode.setNext(newNode);
+            size++;
+        }
+        
+        return;
+    } // end insertAfter
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    public void outShuffle()
+    {
+    } // end outShuffle
+    
+    public void inShuffle()
+    {
+    } // end inShuffle
+    
+    public String toString()
+    {
+        String str = "";
+        Node temp = head;
+        
+        while(temp.getData() != null)
+        {
+            str = str + temp.getData().toString();
+            
+            if (temp.getNext() == null)
+                break;
+            
+            temp = temp.getNext();
+            str = str + " ";
+        }
+        
+        return str;
+    } // end toString
+    
+} // end Deck

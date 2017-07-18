@@ -1,0 +1,283 @@
+import java.io.*;
+import java.nio.ByteBuffer;
+/*=======================================================================================================================================
+ |   Assignment:  Program #10: Binary Searching a Binary File
+ |       Author:  Alejandro Zaragoza
+ |       Course:  CSC 127B
+ |
+ |       TA/SL :  Ben Gaska
+ |   Instructor:  L. McCann
+ |     Due Date:  December 1st, 2015 9:00pm
+ |
+ |  Description:  This program gets from the command line a path to a file and a prefix of a name of a county. Using recursive binary
+ |                search tries to find (or fails at) all counties within that file whose names begin with that prefix. When the name is
+ |                found the program will display to the screen the complete name, state abbreviation, and population of each county
+ |                starting with the given name prefix. If it was not found an error message is printed.
+ |                
+ | Operational :  Type in the file path and prefix to search for on the command line.
+ | Requirements   
+ |
+ | Deficencies :  none
+ |                
+ *=====================================================================================================================================*/
+public class Prog10
+{
+  public static void main (String [] args)
+  {
+    final String fileName = new String("county2k.bin"); // change this so that it is inputted from the command line bruh
+    RandomAccessFile randyIn = null;
+    int randyLength = 0;
+    
+    try
+    {
+      randyIn = new RandomAccessFile(fileName, "rw");
+      randyLength = (int)randyIn.length();
+    } catch (IOException e)
+    {
+      e.printStackTrace();
+    }
+    
+    
+    //System.out.println( prefixInCounty("barb", "Barber County") );
+    System.out.println( searchForPrefix(0, randyLength-78, randyIn, "FISHER") );
+    //System.out.println(randyLength);
+    //printProbe(0, randyLength-78*56, randyIn);
+    
+    /*
+     try
+     {
+     randyIn = new RandomAccessFile(fileName, "rw");
+     
+     for(int p = 78 * 10; p < 78 * 10 + 78 * 10; p=p+78)
+     {
+     
+     
+     byte[] b = new byte[78];
+     
+     randyIn.seek(p);
+     randyIn.read(b);
+     
+     byte[] abrev = new byte[2];
+     byte[] stateCode = new byte[4];
+     byte[] countyCode = new byte[4];
+     byte[] population = new byte[4];
+     byte[] name = new byte[64];
+     
+     int x = 0;
+     
+     for(int i=0; i < 2; i++) // puts the state abbreviation in der
+     {
+     abrev[i] = b[i];
+     x++;
+     }
+     
+     for(int i = 0; i < 4; i++)
+     {
+     stateCode[i] = b[x];
+     x++;
+     }
+     
+     for(int i = 0; i < 4; i++)
+     {
+     countyCode[i] = b[x];
+     x++;
+     }
+     
+     for(int i = 0; i < 4; i++)
+     {
+     population[i] = b[x];
+     x++;
+     }
+     
+     for(int i = 0; i < 64; i++)
+     {
+     name[i] = b[x];
+     x++;
+     }
+     
+     System.out.printf("%s %d %d %d %s\n", new String(abrev), ByteBuffer.wrap(stateCode).getInt(), 
+     ByteBuffer.wrap(countyCode).getInt(), ByteBuffer.wrap(population).getInt(), new String(name));
+     // File is 2 byte state abrev (AZ), int val for FIPS code, int cal for county code, int val pop, 64byte string
+     
+     } // end my big ass for loop bitch
+     } // end try
+     catch (IOException e) {
+     e.printStackTrace();
+     }*/
+    
+  } // end main
+  
+  
+  
+  // end is that starting point of the last 'county'
+  public static boolean searchForPrefix(int start, int end, RandomAccessFile file, String prefix)
+  {  
+    int middle = (((start + end) / 78) / 2) * 78; // finds the middle of from the starting point of the first and starting point of the end
+    int x = 14;                                   // integer that holds the starting 'byte' place of where the string begins
+    int result = 0;
+    byte[] b = new byte[78];                      // holds the entire 'county line' from the binary file
+    byte[] name = new byte[64];                   // holds the country name
+    
+    // BASE CASE NUMBER ONE
+    if (end < start)                              // if end is greater than start the test has failed
+      return false;
+    
+    printProbe(start, end, file);                // print the probes at the start of each search
+    
+    
+    
+    try
+    {
+      file.seek(middle);
+      file.read(b);
+    } // end try block 
+    catch (IOException e) {}
+    
+    for(int i = 0; i < 64; i++)
+    {
+      name[i] = b[x];
+      x++;
+    } // end for loop
+    
+    result = prefixInCounty(prefix, new String(name));
+    
+    
+    if (result == 0)
+      return true;
+    else if (result < 0)
+      return searchForPrefix(start, middle - 78, file, prefix);
+    else
+      return searchForPrefix(middle + 78, end, file, prefix);
+    
+    
+    
+    
+    
+  } // end searchForPrefix
+  
+  
+  
+  /*===================================================================================================================================
+   |  Method Prefix In County?
+   |
+   |        Purpose: This method takes in the prefix that is being searched for as well as the the current county to see if this
+   |                 prefix exists inside this county name. The method returns 0 if it does exists inside the name, a negative value
+   |                 if the character at the index where they differ is of lower ASCII value, and a positive if the ASCII value of the
+   |                 different character is positive.
+   |
+   |     Parameters: String prefix - the prefix to look for inside the county
+   |                 String county - the county to be looked into by the prefix
+   |
+   |        Returns:  -1 / 0 / 1 (depending on the result)
+   *=================================================================================================================================*/
+  public static int prefixInCounty(String prefix, String county)
+  {
+    prefix = prefix.toUpperCase(); // puts the prefix and county in uppercase for easier ASCII comparisons
+    county = county.toUpperCase();
+    
+    int maxIndex = 0; // holds the length of the shorter string to avoid going out of bounds
+    
+    if (prefix.length() < county.length())
+      maxIndex = prefix.length();
+    else
+      maxIndex = county.length();
+    
+    
+    
+    for (int i = 0; i < maxIndex; i++)
+    {
+      if (prefix.charAt(i) < county.charAt(i)) // lower ASCII value
+        return -1;
+      else if (prefix.charAt(i) > county.charAt(i)) // higher ASCII value
+        return 1;
+    } // end for loop
+    
+    
+    return 0; // prefix IS inside the county. true.
+  } // false
+  
+  
+  
+  
+  /*===================================================================================================================================
+   |  Method Print Probe
+   |
+   |        Purpose: This method takes in the starting point and ending point to search in a binary file and prints out what the high,
+   |                 med, and low of this file at these indicies is. These probes are essential for debugging purposes and for just overall
+   |                 tracking of how the program executed.
+   |
+   |     Parameters: int start - the starting point of the first 'county'
+   |                 int end - the starting point of the last 'county'
+   |                 RandomAccessFile file - the binary file to be searching through
+   |
+   |        Returns:  (none)
+   *=================================================================================================================================*/
+  public static void printProbe(int start, int end, RandomAccessFile file)
+  {
+    int middle = (((start + end) / 78) / 2) * 78;
+    int x = 14; // starts at 14 since thats when the bytes containing teh string begins
+    
+    byte[] b = new byte[78]; // to hold the bytes of this county
+    byte[] name = new byte[64]; // to hold just the name this county
+    
+    
+    System.out.printf("Probe #1:");
+    
+    
+    ///////////////////////////////////////// Prints the low
+    try
+    {
+      file.seek(start);
+      file.read(b);
+    }
+    catch (IOException e){}
+    for(int i = 0; i < 64; i++)
+    {
+      name[i] = b[x];
+      x++;
+    }
+    System.out.printf("\tLow:\t%d (%s)\n", start / 78, new String(name));
+    ////////////////////////////////////////////////////////////
+    
+    
+    
+    
+    ////////////////////////////////////////// Prints the med
+    try
+    {
+      file.seek(middle);
+      file.read(b);
+    }
+    catch (IOException e){}
+    x = 14; // reset to 14 since the string begins here
+    for (int i = 0; i < 64; i++)
+    {
+      name[i] = b[x];
+      x++;
+    }
+    System.out.printf("\tMid:\t%d (%s)\n", middle / 78, new String(name));
+    ////////////////////////////////////////////////////////////
+    
+    
+    
+    
+    ////////////////////////////////////////// Prints the end
+    try
+    {
+      file.seek(end);
+      file.read(b);
+    }
+    catch (IOException e){}
+    x = 14; // reset to 14 since the string begins here
+    for (int i = 0; i < 64; i++)
+    {
+      name[i] = b[x];
+      x++;
+    }
+    System.out.printf("\tHigh:\t%d (%s)\n", end / 78, new String(name));
+    //////////////////////////////////////////////////
+    
+  } // end printProbe
+  
+  
+} // end class
